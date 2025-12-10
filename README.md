@@ -1,64 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Pharmacy Management System with AI & OCR
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based Pharmacy Management System that integrates **AI** and **OCR** to automate prescription processing, doctor's BMDC validation, and symptom-based medicine suggestions.
 
-## About Laravel
+This project was developed as part of the **CSE311 – Database Management Systems** course.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🔍 Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. Pharmacy Management
 
-## Learning Laravel
+- Complete inventory management (medicines, stock, purchase, sale)
+- Customer & prescription records
+- Invoice / sale management
+- Role-based access (e.g., admin, pharmacist)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Prescription OCR & BMDC Validation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Users upload a prescription image (JPEG / PNG / PDF)
+- A **Python script** (Tesseract OCR + AI) runs from Laravel via command line
+- OCR extracts raw text from the prescription
+- AI (via **DeepSeek model on OpenRouter**):
+  - Extracts the **BMDC registration number** using patterns
+  - Optionally extracts patient name, age, diagnosis, medicines, dosage, etc.
+- A **web crawler** fetches doctor details from the official BMDC website using the extracted BMDC number
+- The system stores / validates:
+  - Doctor name
+  - BMDC number
+  - Specialization (if available)
+  - Other metadata
 
-## Laravel Sponsors
+> **Note:** The BMDC crawler is for educational purposes only. When used in production, ensure you comply with BMDC terms of use and local laws.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+### 3. Symptom-based Medicine Suggestion
 
-### Premium Partners
+- User selects / types symptoms
+- AI model queries the local **medicine directory** (DB) and suggests possible medicines
+- Suggestions are mapped to:
+  - Generic name
+  - Brand name
+  - Strength & dosage form
+- AI returns only medicines that exist in the system’s DB (no hallucinated brands)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### 4. AI-Powered Generic Information
 
-## Contributing
+- For any selected medicine, AI can:
+  - Explain generic details
+  - Suggest indications / contraindications
+  - Show possible side effects (educational, not medical advice)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🛠 Tech Stack
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- **Backend:** Laravel (PHP)
+- **Database:** MySQL
+- **Frontend:** Blade / Bootstrap (or your stack)
+- **AI API:** DeepSeek model via [OpenRouter](https://openrouter.ai/)
+- **OCR:** Tesseract via `pytesseract` (Python)
+- **Crawler:** Custom PHP made crawler with regex to access BMDC website
+- **Others:** Composer, NPM, GitHub Actions (CI)
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🧱 Project Structure (Relevant Parts)
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+.
+├── app
+│   ├── Console
+│   │   └── Commands
+│   │       └── AnalyzePrescription.php        # Example: artisan command to test OCR+AI
+│   ├── Http
+│   │   └── Controllers
+│   │       └── PrescriptionController.php     # Handles upload and analysis
+│   └── Services
+│       └── PrescriptionOcrService.php         # PHP service to call Python script
+├── ocr
+│   └── extract_prescription.py                # Python OCR + AI integration
+├── database
+│   └── migrations                             # Pharmacy, doctor, medicine, etc.
+├── public
+├── resources
+├── routes
+│   └── web.php
+├── .env.example
+├── .gitattributes
+├── .gitignore
+├── composer.json
+├── package.json
+├── README.md
+└── LICENSE
